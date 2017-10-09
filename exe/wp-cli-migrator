@@ -1,0 +1,52 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'optparse'
+require 'set'
+require 'wp-cli-migrator'
+
+options = {
+  :stages=>Set.new
+}
+
+parser = OptionParser.new do |opts|
+  opts.banner = "usage: #{$0} [options]"
+
+  opts.on('--path PATH', 'path to migrations directory (defaults to ./migrations)') do |path|
+    options[:path] = path
+  end
+
+  opts.on('--target MIGRATION', 'a numeric migration (defaults to latest)') do |target|
+    options[:target] = target.to_i
+  end
+
+  opts.on('--pre', 'run pre-install step(s)') do
+    options[:stages] << :pre
+  end
+
+  opts.on('--post', 'run post-install step(s)') do
+    options[:stages] << :post
+  end
+
+  opts.on('--force', 'forcefully finalize migrations') do
+    options[:force] = true
+  end
+end
+
+parser.parse!
+
+abort parser.help \
+  unless options[:stages].any?
+
+([:pre, :post] & options[:stages].to_a).each do |stage|
+  migrator_options = {
+    :force=>options[:force]
+  }
+
+  WP::CLI::Migrator.new(
+    options[:path],
+    stage,
+    options[:target],
+    migrator_options
+  ).run
+end
