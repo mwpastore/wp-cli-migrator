@@ -130,7 +130,7 @@ module WP
 
       def installed_plugin_names
         %x{#{WP_CLI.join(' ')} plugin list --field=name #{WP_CLI_OPTIONS.join(' ')}}
-          .split("\n")
+          .split(/\s+/)
           .map(&:to_sym)
       end
 
